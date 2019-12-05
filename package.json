@@ -1,0 +1,30 @@
+{
+  "name": "path-finding",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/NavMeshPathFinding.ts",
+  "scripts": {
+    "dev": "rollup --config rollup.dev.js --watch",
+    "product": "rollup --config rollup.product.js && rollup --config rollup.build.js",
+    "exportes6": "rollup --config rollup.export.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitee.com:t102011/navMesh.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "rollup-plugin-terser": "^5.1.2"
+  },
+  "devDependencies": {
+    "rollup": "^1.20.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript": "^1.0.1",
+    "rollup-plugin-uglify": "^6.0.3",
+    "tslib": "^1.10.0",
+    "typescript": "^3.6.4",
+    "rollup-plugin-terser": "^5.1.2"
+  }
+}
