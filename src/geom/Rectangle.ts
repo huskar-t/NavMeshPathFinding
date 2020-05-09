@@ -50,6 +50,10 @@ export class Rectangle {
         return (x >= this.x && x + width <= this.x + this.width && y >= this.y && y + height <= this.y + this.height);
     };
 
+    containsRect(rect) {
+        return (rect.x >= this.x && rect.x + rect.width <= this.x + this.width && rect.y >= this.y && rect.y + rect.height <= this.y + this.height);
+    };
+
     union(rect) {
         return this.clone().extend(rect.x, rect.y, rect.width, rect.height);
     };

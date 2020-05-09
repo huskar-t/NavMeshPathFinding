@@ -64,7 +64,11 @@ class NavMeshPathFinding {
         // }
         let pl: Polygon = new Polygon(polygonPath.length, polygonPath);
         pl.cw();
-        this.polygonV.push(pl);
+        let outEdge: Polygon = this.polygonV[0];
+        let v: Polygon = outEdge.complement(pl);
+        if (v != null) {
+            this.polygonV.push(v)
+        }
     }
 
     /**

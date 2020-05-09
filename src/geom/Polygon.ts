@@ -228,6 +228,61 @@ export class Polygon {
         }
     }
 
+    /***
+     * 根据主多边形切割多边形
+     * @param polygon
+     * @constructor
+     */
+    complement(polygon: Polygon): Polygon {
+        let rect = this.rectangle();
+        if (rect.containsRect(polygon.rectangle())){
+            return polygon
+        }
+        let intersectRect = rect.intersection(polygon.rectangle());
+        if (!intersectRect || intersectRect.isEmpty() === true) {
+            return null;
+        }
+        //所有顶点和交点
+        let cv0: Array<InnerNode> = new Array<InnerNode>();//主多边形 //.<InnerNode>
+        let cv1: Array<InnerNode> = new Array<InnerNode>();//切割多边形.<InnerNode>
+        //初始化
+        let node: InnerNode;
+        for (let i: number = 0; i < this.vertexV.length; i++) {
+            node = new InnerNode(this.vertexV[i], false, true);
+            if (i > 0) {
+                cv0[i - 1].next = node;
+            }
+            cv0.push(node);
+        }
+        for (let j: number = 0; j < polygon.vertexV.length; j++) {
+            node = new InnerNode(polygon.vertexV[j], false, false);
+            if (j > 0) {
+                cv1[j - 1].next = node;
+            }
+            cv1.push(node);
+        }
+
+        //插入交点
+        let insCnt: number = Polygon.intersectPoint(cv0, cv1);
+
+        //生成多边形
+        if (insCnt > 0) {
+
+            let out: Array<Vector2f> = new Array<Vector2f>();
+            cv1.forEach(function (testNode: InnerNode) {
+                if (rect.contains(testNode.v.x, testNode.v.y)) {
+                    // 点在主多边形内
+                    out.push(testNode.v)
+                }
+            });
+            let pl: Polygon = new Polygon(out.length, out);
+            pl.cw();
+            return pl;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * 生成多边形，顺时针序； 生成的内部孔洞多边形为逆时针序
      * @param cv0

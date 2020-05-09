@@ -1023,6 +1023,9 @@ var NavMeshPathFinding = (function () {
 	        if (height === void 0) { height = 0; }
 	        return (x >= this.x && x + width <= this.x + this.width && y >= this.y && y + height <= this.y + this.height);
 	    };
+	    Rectangle.prototype.containsRect = function (rect) {
+	        return (rect.x >= this.x && rect.x + rect.width <= this.x + this.width && rect.y >= this.y && rect.y + rect.height <= this.y + this.height);
+	    };
 	    Rectangle.prototype.union = function (rect) {
 	        return this.clone().extend(rect.x, rect.y, rect.width, rect.height);
 	    };
@@ -1258,6 +1261,9 @@ var NavMeshPathFinding = (function () {
 	        if (width === void 0) { width = 0; }
 	        if (height === void 0) { height = 0; }
 	        return (x >= this.x && x + width <= this.x + this.width && y >= this.y && y + height <= this.y + this.height);
+	    };
+	    Rectangle.prototype.containsRect = function (rect) {
+	        return (rect.x >= this.x && rect.x + rect.width <= this.x + this.width && rect.y >= this.y && rect.y + rect.height <= this.y + this.height);
 	    };
 	    Rectangle.prototype.union = function (rect) {
 	        return this.clone().extend(rect.x, rect.y, rect.width, rect.height);
@@ -1688,6 +1694,48 @@ var NavMeshPathFinding = (function () {
 	            return null;
 	        }
 	    };
+	    Polygon.prototype.complement = function (polygon) {
+	        var rect = this.rectangle();
+	        if (rect.containsRect(polygon.rectangle())) {
+	            return polygon;
+	        }
+	        var intersectRect = rect.intersection(polygon.rectangle());
+	        if (!intersectRect || intersectRect.isEmpty() === true) {
+	            return null;
+	        }
+	        var cv0 = new Array();
+	        var cv1 = new Array();
+	        var node;
+	        for (var i = 0; i < this.vertexV.length; i++) {
+	            node = new InnerNode(this.vertexV[i], false, true);
+	            if (i > 0) {
+	                cv0[i - 1].next = node;
+	            }
+	            cv0.push(node);
+	        }
+	        for (var j = 0; j < polygon.vertexV.length; j++) {
+	            node = new InnerNode(polygon.vertexV[j], false, false);
+	            if (j > 0) {
+	                cv1[j - 1].next = node;
+	            }
+	            cv1.push(node);
+	        }
+	        var insCnt = Polygon.intersectPoint(cv0, cv1);
+	        if (insCnt > 0) {
+	            var out_1 = new Array();
+	            cv1.forEach(function (testNode) {
+	                if (rect.contains(testNode.v.x, testNode.v.y)) {
+	                    out_1.push(testNode.v);
+	                }
+	            });
+	            var pl = new Polygon(out_1.length, out_1);
+	            pl.cw();
+	            return pl;
+	        }
+	        else {
+	            return null;
+	        }
+	    };
 	    Polygon.prototype.linkToPolygon = function (cv0, cv1) {
 	        var rtV = new Array();
 	        cv0.forEach(function (testNode) {
@@ -1807,18 +1855,18 @@ var NavMeshPathFinding = (function () {
 	var Polygon_2 = Polygon_1.Polygon;
 
 	/*! *****************************************************************************
-	Copyright (c) Microsoft Corporation. All rights reserved.
-	Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-	this file except in compliance with the License. You may obtain a copy of the
-	License at http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) Microsoft Corporation.
 
-	THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-	KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-	WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-	MERCHANTABLITY OR NON-INFRINGEMENT.
+	Permission to use, copy, modify, and/or distribute this software for any
+	purpose with or without fee is hereby granted.
 
-	See the Apache Version 2.0 License for specific language governing permissions
-	and limitations under the License.
+	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+	REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+	AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+	INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+	LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+	OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+	PERFORMANCE OF THIS SOFTWARE.
 	***************************************************************************** */
 	/* global Reflect, Promise */
 
@@ -1874,10 +1922,11 @@ var NavMeshPathFinding = (function () {
 	}
 
 	function __awaiter(thisArg, _arguments, P, generator) {
+	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
 	    return new (P || (P = Promise))(function (resolve, reject) {
 	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
 	        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-	        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+	        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
 	        step((generator = generator.apply(thisArg, _arguments || [])).next());
 	    });
 	}
@@ -1915,14 +1964,15 @@ var NavMeshPathFinding = (function () {
 	}
 
 	function __values(o) {
-	    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+	    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
 	    if (m) return m.call(o);
-	    return {
+	    if (o && typeof o.length === "number") return {
 	        next: function () {
 	            if (o && i >= o.length) o = void 0;
 	            return { value: o && o[i++], done: !o };
 	        }
 	    };
+	    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 	}
 
 	function __read(o, n) {
@@ -2001,6 +2051,21 @@ var NavMeshPathFinding = (function () {
 	    return (mod && mod.__esModule) ? mod : { default: mod };
 	}
 
+	function __classPrivateFieldGet(receiver, privateMap) {
+	    if (!privateMap.has(receiver)) {
+	        throw new TypeError("attempted to get private field on non-instance");
+	    }
+	    return privateMap.get(receiver);
+	}
+
+	function __classPrivateFieldSet(receiver, privateMap, value) {
+	    if (!privateMap.has(receiver)) {
+	        throw new TypeError("attempted to set private field on non-instance");
+	    }
+	    privateMap.set(receiver, value);
+	    return value;
+	}
+
 	var tslib_es6 = /*#__PURE__*/Object.freeze({
 		__proto__: null,
 		__extends: __extends,
@@ -2022,7 +2087,9 @@ var NavMeshPathFinding = (function () {
 		__asyncValues: __asyncValues,
 		__makeTemplateObject: __makeTemplateObject,
 		__importStar: __importStar,
-		__importDefault: __importDefault
+		__importDefault: __importDefault,
+		__classPrivateFieldGet: __classPrivateFieldGet,
+		__classPrivateFieldSet: __classPrivateFieldSet
 	});
 
 	var Cell_1 = createCommonjsModule(function (module, exports) {
@@ -3147,6 +3214,48 @@ var NavMeshPathFinding = (function () {
 	            return null;
 	        }
 	    };
+	    Polygon.prototype.complement = function (polygon) {
+	        var rect = this.rectangle();
+	        if (rect.containsRect(polygon.rectangle())) {
+	            return polygon;
+	        }
+	        var intersectRect = rect.intersection(polygon.rectangle());
+	        if (!intersectRect || intersectRect.isEmpty() === true) {
+	            return null;
+	        }
+	        var cv0 = new Array();
+	        var cv1 = new Array();
+	        var node;
+	        for (var i = 0; i < this.vertexV.length; i++) {
+	            node = new InnerNode(this.vertexV[i], false, true);
+	            if (i > 0) {
+	                cv0[i - 1].next = node;
+	            }
+	            cv0.push(node);
+	        }
+	        for (var j = 0; j < polygon.vertexV.length; j++) {
+	            node = new InnerNode(polygon.vertexV[j], false, false);
+	            if (j > 0) {
+	                cv1[j - 1].next = node;
+	            }
+	            cv1.push(node);
+	        }
+	        var insCnt = Polygon.intersectPoint(cv0, cv1);
+	        if (insCnt > 0) {
+	            var out_1 = new Array();
+	            cv1.forEach(function (testNode) {
+	                if (rect.contains(testNode.v.x, testNode.v.y)) {
+	                    out_1.push(testNode.v);
+	                }
+	            });
+	            var pl = new Polygon(out_1.length, out_1);
+	            pl.cw();
+	            return pl;
+	        }
+	        else {
+	            return null;
+	        }
+	    };
 	    Polygon.prototype.linkToPolygon = function (cv0, cv1) {
 	        var rtV = new Array();
 	        cv0.forEach(function (testNode) {
@@ -3649,7 +3758,11 @@ var NavMeshPathFinding = (function () {
 	    NavMeshPathFinding.prototype.addPolygon = function (polygonPath) {
 	        var pl = new Polygon_1$1.Polygon(polygonPath.length, polygonPath);
 	        pl.cw();
-	        this.polygonV.push(pl);
+	        var outEdge = this.polygonV[0];
+	        var v = outEdge.complement(pl);
+	        if (v != null) {
+	            this.polygonV.push(v);
+	        }
 	    };
 	    NavMeshPathFinding.prototype.unionAll = function () {
 	        for (var n = 1; n < this.polygonV.length; n++) {
